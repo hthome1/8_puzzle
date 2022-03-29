@@ -1,3 +1,4 @@
+from os import stat
 from turtle import right
 from SearchAlgorithms import BuscaLargura
 from SearchAlgorithms import BuscaProfundidade
@@ -17,6 +18,23 @@ class Eightpuzzle (State):
         self.objetivo = np.array([[1,2,3],[8,0,4],[7,6,5]])
         self.correctPos = [[0,2,2],[1,1,1],[2,1,2],[3,1,3],[4,2,3],[5,3,3],[6,3,2],[7,3,1],[8,2,1]]
 
+    def isSolvable(self):
+       invCount = self.getInvCount()
+       return (invCount % 2 == 0)
+
+
+
+    def getInvCount(self):
+        lista = self.estado.flatten()
+        dict_ideal = {1:0,2:1,3:2,8:3,0:4,4:5,7:6,6:7,5:8}
+        sum = 0
+        for elemento in range(0,9):
+            for prox_elemento in range(elemento + 1, 9):
+                if lista[elemento] != 0 and lista[prox_elemento] != 0:
+                    if dict_ideal[lista[prox_elemento]] < dict_ideal[lista[elemento]]:
+                            sum += 1
+        return sum
+
     def FindEmpty(self):
         i = 0
         j = 0
@@ -30,10 +48,16 @@ class Eightpuzzle (State):
             j=0
     
     def sucessors(self):
+
+        
         sucessors = []
+        i,j = self.FindEmpty()
+
+        # if self.impossivel == True:
+        #     sucessors.append(Eightpuzzle(self.estado,"up",i-1,j))
+        #     return sucessors
         # i = self.i
         # j = self.j
-        i,j = self.FindEmpty()
 
         if (self.i-1 >= 0 and self.operator != "down"):
             alterado1 = copy.deepcopy(self.estado)
@@ -77,11 +101,11 @@ class Eightpuzzle (State):
             for j in i:
                 valor = j #numero que esta sendo analisado
                 valor_certo = dict[count] # numero que deveria estar nessa posicao
-                if valor != valor_certo:
+                if valor != valor_certo and valor != 0:
                     casa_certa_i = dict_invertido[valor][0]
                     casa_certa_j = dict_invertido[valor][1]
                     valor_casa = x[casa_certa_i][casa_certa_j]
-                    if valor_certo == valor_casa:
+                    if valor_certo == valor_casa and valor_certo != 0:
                         score2 += 1
                 count+=1
         return score2
@@ -89,10 +113,6 @@ class Eightpuzzle (State):
     def is_goal(self):
         e = str(self.estado)
         o = str(self.objetivo)
-        # print("-------------------")
-        # print(e)
-        # print(o)
-        # print(e==o)
         if e==o:
             return True
         else:
@@ -102,7 +122,7 @@ class Eightpuzzle (State):
         return "Problema do 8-puzzle"
     
     def cost(self):
-        return 0
+        return 1
 
     def print(self):
         return (self.estado)
@@ -113,12 +133,13 @@ class Eightpuzzle (State):
         score = 0
         for linha in self.estado:
             for coluna in linha:
-                score += abs(i - self.correctPos[coluna][1]) + abs(j - self.correctPos[coluna][2])
+                if coluna != 0:
+                    score += abs(i - self.correctPos[coluna][1]) + abs(j - self.correctPos[coluna][2])
                 j+=1
             i+=1
             j=1
         return (score + self.tilePenalty())
-        # return score
+        #return score
     
     def env(self):
         return str(self.estado)
@@ -126,15 +147,22 @@ class Eightpuzzle (State):
 
 def main():
     print('A estrela')
-    matrix = np.array([[8,3,6],[7,5,4],[2,1,0]])
+    matrix = np.array([[3,4,8],[1,2,5],[7,0,6]])
     state = Eightpuzzle(matrix,"",1,0)
-    algorithm = AEstrela()
-    result = algorithm.search(state)
-    if result != None:
-        print('Achou!')
-        print(result.show_path())
+    if(state.isSolvable()):
+        algorithm = AEstrela()
+        result = algorithm.search(state)
+        if result != None:
+            print('Achou!')
+            print(result.show_path())
+        else:
+            print('Nao achou solucao')
     else:
-        print('Nao achou solucao')
+        print("Impossivel")
+
 
 if __name__ == '__main__':
     main()
+
+
+
